@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, Get, Query } from '@nestjs/common';
 import { UsersService } from './users/users.service';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -14,22 +14,17 @@ export class AuthController {
 	async register(@Body() body: { email: string; password: string; roles: string[] }) {
 		this.logger.log(`Register attempt for: ${body.email}, roles: ${body.roles}`);
 
-		const existing = await this.usersService.findByEmail(body.email);
-		if (existing) {
-			this.logger.warn(`Registration failed: email ${body.email} already exists`);
-			throw new BadRequestException('Email déjà utilisé');
-		}
+		const user = await this.usersService.createOrUpdateUser(body.email, body.password, body.roles);
 
-		const user = await this.usersService.createUser(body.email, body.password, body.roles);
-
-		this.logger.log(`User created: ${user.email} [${user.roles.join(', ')}]`);
+		this.logger.log(`User created or updated: ${user.email} [${user.roles.join(', ')}]`);
 
 		return {
-			id: user.id_users, // ← если фронт ожидает `id`, а не `id_users`
+			id: user.id_users,
 			email: user.email,
 			roles: user.roles
 		};
 	}
+
 
 	@Post('login')
 	async login(@Body() body: { email: string; password: string }) {
@@ -52,8 +47,19 @@ export class AuthController {
 		return {
 			id: user.id_users,
 			email: user.email,
-			roles: user.roles
+			roles: user.roles,
+			currentRole: user.current_role
 		};
 	}
+
+	@Get('check-email')
+	async checkEmail(@Query('email') email: string) {
+		const user = await this.usersService.findByEmail(email);
+		if (user) {
+			return { exists: true, roles: user.roles };
+		}
+		return { exists: false };
+	}
+
 
 }
