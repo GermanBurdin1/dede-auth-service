@@ -1,3 +1,4 @@
+// profile.schema.ts
 import { Schema } from 'mongoose';
 
 export const ProfileSchema = new Schema({
@@ -5,6 +6,11 @@ export const ProfileSchema = new Schema({
   full_name: String,
   photo_url: String,
   bio: String,
+  experience_years: Number,
+  price: Number,
+  specializations: [String],
+  certificates: [String],
+  email: String,
   preferences: {
     language: String,
     theme: String,
@@ -14,4 +20,5 @@ export const ProfileSchema = new Schema({
     github: String,
     linkedin: String,
   },
+  rating: Number, // фиксированное или рассчитываемое значение
 });

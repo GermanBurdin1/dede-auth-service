@@ -1,3 +1,4 @@
+// profiles.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -8,12 +9,29 @@ export class ProfilesService {
     @InjectModel('Profile') private profileModel: Model<any>,
   ) {}
 
-  async createProfile(user_id: string, full_name: string) {
+  async createProfile(data: {
+    user_id: string;
+    full_name: string;
+    photo_url?: string;
+    bio?: string;
+    experience_years?: number;
+    price?: number;
+    specializations?: string[];
+    certificates?: string[];
+    email?: string;
+    rating?: number;
+  }) {
     return this.profileModel.create({
-      user_id,
-      full_name,
-      preferences: { language: 'fr', theme: 'dark' },
+      ...data,
+      preferences: {
+        language: 'fr',
+        theme: 'dark',
+      },
     });
+  }
+
+  async updateProfile(user_id: string, updates: Partial<any>) {
+    return this.profileModel.findOneAndUpdate({ user_id }, updates, { new: true }).exec();
   }
 
   async findProfile(user_id: string) {
