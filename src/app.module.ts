@@ -10,6 +10,8 @@ import { TeacherProfileModule } from './users/teacher/teacher-profile.module';
 import { TeacherProfile } from './users/teacher/teacher_profiles.entity';
 import { TeacherCertificate } from './users/teacher/teacher_certificates.entity';
 import { TeacherSpecialization } from './users/teacher/teacher_specializations.entity';
+import { TeacherReview } from './users/teacher/teacher-review.entity';
+import { TeacherReviewModule } from './users/teacher/teacher-review.module';
 
 
 @Module({
@@ -29,7 +31,7 @@ import { TeacherSpecialization } from './users/teacher/teacher_specializations.e
 				entities: [User,
 					TeacherProfile,
 					TeacherCertificate,
-					TeacherSpecialization],
+					TeacherSpecialization, TeacherReview],
 				migrations: ['dist/migrations/*.js'],
 				synchronize: false,
 			}),
@@ -41,7 +43,8 @@ import { TeacherSpecialization } from './users/teacher/teacher_specializations.e
 		UsersModule,
 		ProfilesModule,
 		AuthModule,
-		TeacherProfileModule
+		TeacherProfileModule,
+		TeacherReviewModule
 	],
 })
 export class AppModule { }
