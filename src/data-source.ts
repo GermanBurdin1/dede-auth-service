@@ -1,5 +1,8 @@
 import { DataSource } from 'typeorm';
-import { User } from './users/user.entity'; // путь к твоей сущности
+import { User } from './users/user.entity'; 
+import { TeacherProfile } from './users/teacher/teacher_profiles.entity';
+import { TeacherSpecialization } from './users/teacher/teacher_specializations.entity';
+import { TeacherCertificate } from './users/teacher/teacher_certificates.entity';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -10,7 +13,9 @@ export const AppDataSource = new DataSource({
   database: 'postgres',
   synchronize: false,
   logging: true,
-  entities: [User],
+  entities: [User, TeacherProfile,
+  TeacherSpecialization,
+  TeacherCertificate],
   migrations: ['src/migrations/*.ts'],
   subscribers: [],
 });

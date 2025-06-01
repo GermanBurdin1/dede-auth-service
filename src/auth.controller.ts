@@ -37,6 +37,7 @@ export class AuthController {
 		}
 
 		const isMatch = await bcrypt.compare(body.password, user.password);
+		this.logger.log("bodypassword:" + body.password, "userpassword:" + user.password);
 		if (!isMatch) {
 			this.logger.warn(`Login failed: bad password for ${body.email}`);
 			throw new BadRequestException('Mot de passe incorrect');
@@ -60,6 +61,43 @@ export class AuthController {
 		}
 		return { exists: false };
 	}
+
+	@Get('teachers')
+	async getTeachers(
+		@Query('page') page = 1,
+		@Query('limit') limit = 6,
+		@Query('search') search?: string,
+		@Query('priceMin') priceMin?: string,
+		@Query('priceMax') priceMax?: string,
+		@Query('experienceMin') experienceMin?: string,
+		@Query('experienceMax') experienceMax?: string,
+		@Query('specialization') specialization?: string,
+		@Query('language') language?: string,
+	) {
+		const pageNum = parseInt(page as any, 10) || 1;
+		const limitNum = parseInt(limit as any, 10) || 6;
+
+		const filters = {
+			search,
+			priceMin: priceMin ? parseInt(priceMin, 10) : undefined,
+			priceMax: priceMax ? parseInt(priceMax, 10) : undefined,
+			experienceMin: experienceMin ? parseInt(experienceMin, 10) : undefined,
+			experienceMax: experienceMax ? parseInt(experienceMax, 10) : undefined,
+			specialization,
+			language,
+		};
+
+		const [teachers, total] = await this.usersService.findTeachersPaginated(
+			pageNum,
+			limitNum,
+			filters
+		);
+
+		return { data: teachers, total };
+	}
+
+
+
 
 
 }
