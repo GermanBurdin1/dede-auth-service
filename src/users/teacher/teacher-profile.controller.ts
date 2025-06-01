@@ -35,7 +35,11 @@ export class TeacherProfileController {
 	}
 
 	@Put('photo/:userId')
-	uploadPhoto(@Param('userId') userId: string, @Body() body: { photoUrl: string }) {
-		return this.profileService.uploadPhoto(userId, body.photoUrl);
+	updatePhoto(
+		@Param('userId') userId: string,
+		@Body('photoUrl') photoUrl: string
+	) {
+		return this.profileService.uploadPhoto(userId, photoUrl);
 	}
+
 }
