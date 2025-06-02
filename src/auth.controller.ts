@@ -2,28 +2,46 @@ import { Controller, Post, Body, BadRequestException, Get, Query } from '@nestjs
 import { UsersService } from './users/users.service';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { TeacherProfileService } from './users/teacher/teacher-profile.service';
 
 
 @Controller('auth')
 export class AuthController {
 	private readonly logger = new Logger(AuthController.name);
 
-	constructor(private readonly usersService: UsersService) { }
+	constructor(private readonly usersService: UsersService, private teacherProfileService: TeacherProfileService) { }
 
 	@Post('register')
-	async register(@Body() body: { email: string; password: string; roles: string[] }) {
-		this.logger.log(`Register attempt for: ${body.email}, roles: ${body.roles}`);
+async register(
+  @Body() body: {
+    email: string;
+    password: string;
+    roles: string[];
+    name: string;
+    surname: string;
+  }
+) {
+  this.logger.log(`Register attempt for: ${body.email}, roles: ${body.roles}`);
 
-		const user = await this.usersService.createOrUpdateUser(body.email, body.password, body.roles);
+  const user = await this.usersService.createOrUpdateUser(
+    body.email,
+    body.password,
+    body.roles,
+    body.name,
+    body.surname
+  );
 
-		this.logger.log(`User created or updated: ${user.email} [${user.roles.join(', ')}]`);
+  this.logger.log(`User created: ${user.email} [${user.roles.join(', ')}]`);
 
-		return {
-			id: user.id_users,
-			email: user.email,
-			roles: user.roles
-		};
-	}
+  return {
+    id: user.id_users,
+    email: user.email,
+    roles: user.roles,
+    name: user.name,
+    surname: user.surname
+  };
+}
+
 
 
 	@Post('login')
@@ -63,38 +81,65 @@ export class AuthController {
 	}
 
 	@Get('teachers')
-	async getTeachers(
-		@Query('page') page = 1,
-		@Query('limit') limit = 6,
-		@Query('search') search?: string,
-		@Query('priceMin') priceMin?: string,
-		@Query('priceMax') priceMax?: string,
-		@Query('experienceMin') experienceMin?: string,
-		@Query('experienceMax') experienceMax?: string,
-		@Query('specialization') specialization?: string,
-		@Query('language') language?: string,
-	) {
-		const pageNum = parseInt(page as any, 10) || 1;
-		const limitNum = parseInt(limit as any, 10) || 6;
+async getTeachers(
+  @Query('page') page = 1,
+  @Query('limit') limit = 6,
+  @Query('search') search?: string,
+  @Query('priceMin') priceMin?: string,
+  @Query('priceMax') priceMax?: string,
+  @Query('experienceMin') experienceMin?: string,
+  @Query('experienceMax') experienceMax?: string,
+  @Query('specialization') specialization?: string,
+  @Query('language') language?: string
+) {
+  const pageNum = parseInt(page as any, 10) || 1;
+  const limitNum = parseInt(limit as any, 10) || 6;
 
-		const filters = {
-			search,
-			priceMin: priceMin ? parseInt(priceMin, 10) : undefined,
-			priceMax: priceMax ? parseInt(priceMax, 10) : undefined,
-			experienceMin: experienceMin ? parseInt(experienceMin, 10) : undefined,
-			experienceMax: experienceMax ? parseInt(experienceMax, 10) : undefined,
-			specialization,
-			language,
-		};
+  const filters = {
+    search,
+    priceMin: priceMin ? parseInt(priceMin, 10) : undefined,
+    priceMax: priceMax ? parseInt(priceMax, 10) : undefined,
+    experienceMin: experienceMin ? parseInt(experienceMin, 10) : undefined,
+    experienceMax: experienceMax ? parseInt(experienceMax, 10) : undefined,
+    specialization,
+    language,
+  };
 
-		const [teachers, total] = await this.usersService.findTeachersPaginated(
-			pageNum,
-			limitNum,
-			filters
-		);
+  const [teachers, total] = await this.usersService.findTeachersPaginated(
+    pageNum,
+    limitNum,
+    filters
+  );
 
-		return { data: teachers, total };
-	}
+  const enrichedTeachers = await Promise.all(
+  teachers.map(async (t) => {
+    try {
+      const profile = await this.teacherProfileService.getFullProfileByUserId(t.id);
+      return {
+        id: t.id,
+        name: `${t.name ?? ''} ${t.surname ?? ''}`.trim() || t.email,
+        email: t.email,
+        photoUrl: profile.photo_url,
+        price: profile.price,
+        rating: profile.rating,
+        experienceYears: profile.experience_years,
+        reviewCount: profile.review_count,
+        bio: profile.bio,
+        specializations: profile.specializations ?? [],
+        certificates: profile.certificates ?? [],
+      };
+    } catch (err) {
+      return null;
+    }
+  })
+);
+
+
+  const valid = enrichedTeachers.filter(t => t !== null);
+
+  return { data: valid, total: valid.length };
+}
+
 
 
 

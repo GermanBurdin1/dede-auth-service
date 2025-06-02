@@ -81,40 +81,51 @@ export class TeacherProfileService {
   }
 
   async updateProfile(userId: string, data: {
-    bio?: string;
-    price?: number;
-    experienceYears?: number;
-    specializations?: string[];
-    certificates?: string[];
-  }) {
-    const profile = await this.profileRepo.findOne({
-      where: { user: { id_users: userId } },
-      relations: ['user']
-    });
-    if (!profile) throw new NotFoundException('Profile not found');
+  bio?: string;
+  price?: number;
+  experienceYears?: number;
+  specializations?: string[];
+  certificates?: string[];
+  name?: string;
+  surname?: string;
+}) {
+  const profile = await this.profileRepo.findOne({
+    where: { user: { id_users: userId } },
+    relations: ['user']
+  });
+  if (!profile) throw new NotFoundException('Profile not found');
 
-    profile.bio = data.bio ?? profile.bio;
-    profile.price = data.price ?? profile.price;
-    profile.experience_years = data.experienceYears ?? profile.experience_years;
+  // Обновление профиля
+  profile.bio = data.bio ?? profile.bio;
+  profile.price = data.price ?? profile.price;
+  profile.experience_years = data.experienceYears ?? profile.experience_years;
 
-    await this.profileRepo.save(profile);
-
-    if (data.specializations) {
-      await this.specRepo.delete({ teacherProfile: { id_teacher_profile: profile.id_teacher_profile } });
-      await this.specRepo.save(
-        data.specializations.map(s => this.specRepo.create({ specialization: s, teacherProfile: profile }))
-      );
-    }
-
-    if (data.certificates) {
-      await this.certRepo.delete({ teacherProfile: { id_teacher_profile: profile.id_teacher_profile } });
-      await this.certRepo.save(
-        data.certificates.map(c => this.certRepo.create({ certificate_url: c, teacherProfile: profile }))
-      );
-    }
-
-    return { message: 'Profile updated' };
+  // Обновление пользователя
+  if (data.name || data.surname) {
+    profile.user.name = data.name ?? profile.user.name;
+    profile.user.surname = data.surname ?? profile.user.surname;
+    await this.userRepo.save(profile.user);
   }
+
+  await this.profileRepo.save(profile);
+
+  if (data.specializations) {
+    await this.specRepo.delete({ teacherProfile: { id_teacher_profile: profile.id_teacher_profile } });
+    await this.specRepo.save(
+      data.specializations.map(s => this.specRepo.create({ specialization: s, teacherProfile: profile }))
+    );
+  }
+
+  if (data.certificates) {
+    await this.certRepo.delete({ teacherProfile: { id_teacher_profile: profile.id_teacher_profile } });
+    await this.certRepo.save(
+      data.certificates.map(c => this.certRepo.create({ certificate_url: c, teacherProfile: profile }))
+    );
+  }
+
+  return { message: 'Profile updated' };
+}
+
 
   async uploadPhoto(userId: string, photoUrl: string) {
     const profile = await this.profileRepo.findOne({

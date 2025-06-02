@@ -22,5 +22,11 @@ export class User {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
+
+	@Column({ nullable: true })
+name: string;
+
+@Column({ nullable: true })
+surname: string;
 }
 

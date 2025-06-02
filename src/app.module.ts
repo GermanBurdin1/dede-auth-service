@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
-import { ProfilesModule } from './profiles/profiles.module';
+//import { ProfilesModule } from './profiles/profiles.module';
 import { User } from './users/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth.module';
@@ -38,10 +38,10 @@ import { TeacherReviewModule } from './users/teacher/teacher-review.module';
 		}),
 
 		// MongoDB (Mongoose)
-		MongooseModule.forRoot(process.env.MONGO_URI),
+		//MongooseModule.forRoot(process.env.MONGO_URI),
 
 		UsersModule,
-		ProfilesModule,
+		//ProfilesModule,
 		AuthModule,
 		TeacherProfileModule,
 		TeacherReviewModule
