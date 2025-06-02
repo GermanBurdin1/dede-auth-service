@@ -67,7 +67,9 @@ async register(
 			id: user.id_users,
 			email: user.email,
 			roles: user.roles,
-			currentRole: user.current_role
+			currentRole: user.current_role,
+			name: user.name,         // ← вот это
+  surname: user.surname 
 		};
 	}
 
