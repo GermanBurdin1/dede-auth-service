@@ -151,4 +151,12 @@ LIMIT $2 OFFSET $3
 		return [data, total];
 	}
 
+	async getBasicInfo(userId: string): Promise<Pick<User, 'id_users' | 'name' | 'surname'> | null> {
+		return this.userRepo.findOne({
+			where: { id_users: userId },
+			select: ['id_users', 'name', 'surname'],
+		});
+	}
+
+
 }
