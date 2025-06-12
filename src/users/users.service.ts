@@ -152,11 +152,30 @@ LIMIT $2 OFFSET $3
 	}
 
 	async getBasicInfo(userId: string): Promise<Pick<User, 'id_users' | 'name' | 'surname'> | null> {
-		return this.userRepo.findOne({
-			where: { id_users: userId },
-			select: ['id_users', 'name', 'surname'],
-		});
-	}
+  console.log('📘 [DB] getBasicInfo called with id:', userId);
+
+  try {
+    const result = await this.userRepo.query(
+      `SELECT id_users, name, surname FROM users WHERE id_users = $1`,
+      [userId]
+    );
+
+    const user = result[0];
+
+    if (!user) {
+      console.warn('⚠️ [DB] No user found with id:', userId);
+      return null;
+    }
+
+    console.log('✅ [DB] User found (raw SQL):', user);
+    return user;
+  } catch (error) {
+    console.error('❌ [DB] Error fetching user info (raw SQL):', error);
+    return null;
+  }
+}
+
+
 
 
 }

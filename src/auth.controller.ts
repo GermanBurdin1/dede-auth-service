@@ -13,11 +13,14 @@ export class AuthController {
 
 	@Get('users/:id')
 	async getUser(@Param('id') id: string) {
-		console.log('⚡ GET /auth/users/:id HIT');
+		console.log('⚡ GET /auth/users/:id HIT', id);
 		const user = await this.usersService.getBasicInfo(id);
+		console.log('🧑 User fetched from DB:', user);
 		if (!user) {
 			throw new BadRequestException('Utilisateur non trouvé');
 		}
+
+		console.log("sdflksdflsdkfslf")
 
 		return {
 			id: user.id_users,
