@@ -14,7 +14,6 @@ export class AuthController {
 	@Get('users/:id')
 	async getUser(@Param('id') id: string) {
 		console.log('⚡ GET /auth/users/:id HIT', id);
-		console.log("test1111111")
 		const user = await this.usersService.getBasicInfo(id);
 		console.log('🧑 User extracted from DB:', user);
 		if (!user) {
