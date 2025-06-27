@@ -152,28 +152,35 @@ LIMIT $2 OFFSET $3
 	}
 
 	async getBasicInfo(userId: string): Promise<Pick<User, 'id_users' | 'name' | 'surname'> | null> {
-  console.log('📘 [DB] getBasicInfo called with id:', userId);
+		console.log('📘 [DB] getBasicInfo called with id:', userId);
 
-  try {
-    const result = await this.userRepo.query(
-      `SELECT id_users, name, surname FROM users WHERE id_users = $1`,
-      [userId]
-    );
+		// Валидация UUID
+		const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+		if (!uuidRegex.test(userId)) {
+			console.error('❌ [DB] Invalid UUID format:', userId);
+			return null;
+		}
 
-    const user = result[0];
+		try {
+			const result = await this.userRepo.query(
+				`SELECT id_users, name, surname FROM users WHERE id_users = $1`,
+				[userId]
+			);
 
-    if (!user) {
-      console.warn('⚠️ [DB] No user found with id:', userId);
-      return null;
-    }
+			const user = result[0];
 
-    console.log('✅ [DB] User found (raw SQL):', user);
-    return user;
-  } catch (error) {
-    console.error('❌ [DB] Error fetching user info (raw SQL):', error);
-    return null;
-  }
-}
+			if (!user) {
+				console.warn('⚠️ [DB] No user found with id:', userId);
+				return null;
+			}
+
+			console.log('✅ [DB] User found (raw SQL):', user);
+			return user;
+		} catch (error) {
+			console.error('❌ [DB] Error fetching user info (raw SQL):', error);
+			return null;
+		}
+	}
 
 
 
