@@ -151,7 +151,7 @@ LIMIT $2 OFFSET $3
 		return [data, total];
 	}
 
-	async getBasicInfo(userId: string): Promise<Pick<User, 'id_users' | 'name' | 'surname'> | null> {
+	async getBasicInfo(userId: string): Promise<any | null> {
 		console.log('📘 [DB] getBasicInfo called with id:', userId);
 
 		// Валидация UUID
@@ -163,7 +163,17 @@ LIMIT $2 OFFSET $3
 
 		try {
 			const result = await this.userRepo.query(
-				`SELECT id_users, name, surname FROM users WHERE id_users = $1`,
+				`SELECT 
+					u.id_users, 
+					u.name, 
+					u.surname,
+					u.roles,
+					g."examLevel",
+					g."targetDate",
+					g.description AS goal_description
+				FROM users u
+				LEFT JOIN student_goals g ON g."studentId" = u.id_users AND g."isActive" = true
+				WHERE u.id_users = $1`,
 				[userId]
 			);
 
@@ -174,7 +184,7 @@ LIMIT $2 OFFSET $3
 				return null;
 			}
 
-			console.log('✅ [DB] User found (raw SQL):', user);
+			console.log('✅ [DB] User found with goal info:', user);
 			return user;
 		} catch (error) {
 			console.error('❌ [DB] Error fetching user info (raw SQL):', error);

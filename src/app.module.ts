@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 //import { ProfilesModule } from './profiles/profiles.module';
+import { GoalsModule } from './goals/goals.module';
 import { User } from './users/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth.module';
@@ -12,6 +13,7 @@ import { TeacherCertificate } from './users/teacher/teacher_certificates.entity'
 import { TeacherSpecialization } from './users/teacher/teacher_specializations.entity';
 import { TeacherReview } from './users/teacher/teacher-review.entity';
 import { TeacherReviewModule } from './users/teacher/teacher-review.module';
+import { StudentGoal } from './goals/student-goal.entity';
 
 
 @Module({
@@ -31,7 +33,8 @@ import { TeacherReviewModule } from './users/teacher/teacher-review.module';
 				entities: [User,
 					TeacherProfile,
 					TeacherCertificate,
-					TeacherSpecialization, TeacherReview],
+					TeacherSpecialization, TeacherReview,
+					StudentGoal],
 				migrations: ['dist/migrations/*.js'],
 				synchronize: false,
 			}),
@@ -44,7 +47,8 @@ import { TeacherReviewModule } from './users/teacher/teacher-review.module';
 		//ProfilesModule,
 		AuthModule,
 		TeacherProfileModule,
-		TeacherReviewModule
+		TeacherReviewModule,
+		GoalsModule
 	],
 })
 export class AppModule { }
