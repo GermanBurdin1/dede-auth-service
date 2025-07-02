@@ -11,6 +11,24 @@ export class AuthController {
 
 	constructor(private readonly usersService: UsersService, private teacherProfileService: TeacherProfileService) { }
 
+	/**
+	 * Получить статистику регистрации пользователей за период
+	 */
+	@Get('users/stats')
+	async getUsersStats(
+		@Query('startDate') startDate: string,
+		@Query('endDate') endDate: string
+	) {
+		this.logger.log(`Getting user stats from ${startDate} to ${endDate}`);
+		
+		const stats = await this.usersService.getUserRegistrationStats(
+			new Date(startDate),
+			new Date(endDate)
+		);
+		
+		return stats;
+	}
+
 	@Get('users/:id')
 	async getUser(@Param('id') id: string) {
 		console.log('⚡ GET /auth/users/:id HIT', id);
@@ -158,21 +176,4 @@ export class AuthController {
 		return { data: valid, total: valid.length };
 	}
 
-	/**
-	 * Получить статистику регистрации пользователей за период
-	 */
-	@Get('users/stats')
-	async getUsersStats(
-		@Query('startDate') startDate: string,
-		@Query('endDate') endDate: string
-	) {
-		this.logger.log(`Getting user stats from ${startDate} to ${endDate}`);
-		
-		const stats = await this.usersService.getUserRegistrationStats(
-			new Date(startDate),
-			new Date(endDate)
-		);
-		
-		return stats;
-	}
 }
