@@ -192,7 +192,71 @@ LIMIT $2 OFFSET $3
 		}
 	}
 
+	/**
+	 * Получить статистику регистрации пользователей за заданный период
+	 */
+	async getUserRegistrationStats(startDate: Date, endDate: Date) {
+		try {
+			this.logger.log(`📊 Getting user registration stats from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
+			// Подсчитываем новых студентов
+			const studentsCount = await this.userRepo.count({
+				where: {
+					roles: 'student' as any, // TypeORM array contains
+					created_at: {
+						$gte: startDate,
+						$lte: endDate
+					} as any
+				}
+			});
 
+			// Подсчитываем новых преподавателей  
+			const teachersCount = await this.userRepo.count({
+				where: {
+					roles: 'teacher' as any, // TypeORM array contains
+					created_at: {
+						$gte: startDate,
+						$lte: endDate
+					} as any
+				}
+			});
 
+			this.logger.log(`📊 Stats: ${studentsCount} students, ${teachersCount} teachers`);
+
+			return {
+				newStudents: studentsCount,
+				newTeachers: teachersCount,
+				period: {
+					startDate: startDate.toISOString(),
+					endDate: endDate.toISOString()
+				}
+			};
+		} catch (error) {
+			this.logger.error('❌ Error getting user registration stats:', error);
+			
+			// Fallback to raw SQL if TypeORM fails
+			try {
+				const result = await this.userRepo.query(`
+					SELECT 
+						COUNT(*) FILTER (WHERE 'student' = ANY(roles)) as student_count,
+						COUNT(*) FILTER (WHERE 'teacher' = ANY(roles)) as teacher_count
+					FROM users 
+					WHERE created_at BETWEEN $1 AND $2
+				`, [startDate, endDate]);
+
+				const stats = result[0];
+				return {
+					newStudents: parseInt(stats.student_count) || 0,
+					newTeachers: parseInt(stats.teacher_count) || 0,
+					period: {
+						startDate: startDate.toISOString(),
+						endDate: endDate.toISOString()
+					}
+				};
+			} catch (sqlError) {
+				this.logger.error('❌ Raw SQL also failed:', sqlError);
+				return { newStudents: 0, newTeachers: 0 };
+			}
+		}
+	}
 }

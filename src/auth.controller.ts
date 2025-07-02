@@ -158,6 +158,21 @@ export class AuthController {
 		return { data: valid, total: valid.length };
 	}
 
-
-
+	/**
+	 * Получить статистику регистрации пользователей за период
+	 */
+	@Get('users/stats')
+	async getUsersStats(
+		@Query('startDate') startDate: string,
+		@Query('endDate') endDate: string
+	) {
+		this.logger.log(`Getting user stats from ${startDate} to ${endDate}`);
+		
+		const stats = await this.usersService.getUserRegistrationStats(
+			new Date(startDate),
+			new Date(endDate)
+		);
+		
+		return stats;
+	}
 }
