@@ -24,6 +24,15 @@ export class MailService {
       html: `<p>Merci pour votre inscription. Cliquez ici pour confirmer votre email :</p>
              <a href="${verificationUrl}">${verificationUrl}</a>`,
     };
-    await this.transporter.sendMail(mailOptions);
+    console.log('[MailService] Попытка отправить письмо:');
+    console.log('  SMTP_USER:', process.env.SMTP_USER);
+    console.log('  To:', to);
+    console.log('  Verification URL:', verificationUrl);
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log('[MailService] Письмо успешно отправлено!');
+    } catch (err) {
+      console.error('[MailService] Ошибка отправки письма:', err);
+    }
   }
 }
