@@ -1,15 +1,21 @@
-import { Controller, Post, Body, BadRequestException, Get, Query, Param } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, Get, Query, Param, UseGuards, Req, Res } from '@nestjs/common';
 import { UsersService } from './users/users.service';
 import { Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { TeacherProfileService } from './users/teacher/teacher-profile.service';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
 
 
 @Controller('auth')
 export class AuthController {
 	private readonly logger = new Logger(AuthController.name);
 
-	constructor(private readonly usersService: UsersService, private teacherProfileService: TeacherProfileService) { }
+	constructor(
+		private readonly usersService: UsersService,
+		private teacherProfileService: TeacherProfileService,
+		private readonly jwtService: JwtService,
+	) { }
 
 	/**
 	 * Получить статистику регистрации пользователей за период
@@ -174,6 +180,46 @@ export class AuthController {
 		const valid = enrichedTeachers.filter(t => t !== null);
 
 		return { data: valid, total: valid.length };
+	}
+
+	@Post('verify-email')
+	async verifyEmail(@Body() body: { token: string }) {
+		const user = await this.usersService.findByToken(body.token);
+		if (!user) {
+			throw new BadRequestException('Token invalide ou expiré');
+		}
+		user.is_email_confirmed = true;
+		user.email_confirm_token = null;
+		await this.usersService.save(user);
+		return { message: 'Email confirmé avec succès' };
+	}
+
+	@Get('oauth/google')
+	@UseGuards(AuthGuard('google'))
+	async googleAuth() {
+		// Passport перенаправит на Google
+	}
+
+	@Get('oauth/google/callback')
+	@UseGuards(AuthGuard('google'))
+	async googleAuthCallback(@Req() req, @Res() res) {
+		// req.user содержит данные Google
+		let user = await this.usersService.findByEmail(req.user.email);
+		if (!user) {
+			// Создаём пользователя, если не найден
+			user = await this.usersService.createOrUpdateUser(
+				req.user.email,
+				'', // пароль не нужен для OAuth
+				['student'], // или определите роль по логике
+				req.user.name || '',
+				''
+			);
+		}
+		// Генерируем JWT
+		const payload = { sub: user.id_users, email: user.email, roles: user.roles };
+		const token = this.jwtService.sign(payload);
+		// Редиректим на фронт с токеном
+		res.redirect(`http://localhost:4200/oauth-success?token=${token}`);
 	}
 
 }

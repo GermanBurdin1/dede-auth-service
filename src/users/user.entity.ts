@@ -23,10 +23,17 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-	@Column({ nullable: true })
-name: string;
+  @Column({ nullable: true })
+  name: string;
 
-@Column({ nullable: true })
-surname: string;
+  @Column({ nullable: true })
+  surname: string;
+
+  @Column({ default: false })
+  is_email_confirmed: boolean;
+
+  @Column({ nullable: true })
+  email_confirm_token: string | null;
+
 }
 

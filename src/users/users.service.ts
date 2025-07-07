@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { Logger } from '@nestjs/common';
+import { MailService } from '../services/mail.service';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -12,6 +14,7 @@ export class UsersService {
 	constructor(
 		@InjectRepository(User)
 		private userRepo: Repository<User>,
+		private mailService: MailService,
 	) { }
 
 	async createOrUpdateUser(
@@ -44,6 +47,8 @@ export class UsersService {
 
 		// Новый пользователь
 		const hash = await bcrypt.hash(password, 10);
+		const token = require('crypto').randomBytes(32).toString('hex');
+
 		const user = this.userRepo.create({
 			email,
 			password: hash,
@@ -51,12 +56,19 @@ export class UsersService {
 			name,
 			surname,
 			is_active: true,
+			is_email_confirmed: false,
+			email_confirm_token: token,
 		});
 
-		return this.userRepo.save(user);
+		await this.userRepo.save(user);
+
+		// Отправляем письмо с подтверждением email
+		if (this.mailService && typeof this.mailService.sendVerificationEmail === 'function') {
+			await this.mailService.sendVerificationEmail(user.email, token);
+		}
+
+		return user;
 	}
-
-
 
 	async findByEmail(email: string): Promise<User | null> {
 		this.logger.log(`Looking for user with email: ${email}`);
@@ -233,5 +245,13 @@ LIMIT $2 OFFSET $3
 				}
 			};
 		}
+	}
+
+	async findByToken(token: string): Promise<User | null> {
+		return this.userRepo.findOne({ where: { email_confirm_token: token } });
+	}
+
+	async save(user: User): Promise<User> {
+		return this.userRepo.save(user);
 	}
 }
