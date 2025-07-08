@@ -1,38 +1,38 @@
 # generate-migration.ps1
-# Скрипт для генерации новых миграций в auth-service
+# Script for generating new migrations in auth-service
 
 param(
     [Parameter(Mandatory=$true)]
     [string]$MigrationName
 )
 
-Write-Host "🔄 Генерация миграции: $MigrationName" -ForegroundColor Cyan
+Write-Host "[GEN] Generating migration: $MigrationName" -ForegroundColor Cyan
 
-# Проверяем, что мы в правильной директории
+# Check that we are in the correct directory
 if (!(Test-Path "package.json")) {
-    Write-Host "❌ Ошибка: package.json не найден. Убедитесь, что вы в директории auth-service" -ForegroundColor Red
+    Write-Host "[ERR] Error: package.json not found. Make sure you are in auth-service directory" -ForegroundColor Red
     exit 1
 }
 
-# Генерируем миграцию
+# Generate migration
 try {
-    Write-Host "📝 Выполняется команда: npm run migration:generate -- src/migrations/$MigrationName -d src/data-source.ts" -ForegroundColor Yellow
+    Write-Host "[CMD] Executing command: npm run migration:generate -- src/migrations/$MigrationName -d src/data-source.ts" -ForegroundColor Yellow
     npm run migration:generate -- src/migrations/$MigrationName -d src/data-source.ts
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ Миграция '$MigrationName' успешно сгенерирована!" -ForegroundColor Green
-        Write-Host "📁 Проверьте файл в папке src/migrations/" -ForegroundColor Gray
+        Write-Host "[OK] Migration '$MigrationName' generated successfully!" -ForegroundColor Green
+        Write-Host "[INFO] Check file in src/migrations/ folder" -ForegroundColor Gray
     } else {
-        Write-Host "❌ Ошибка при генерации миграции" -ForegroundColor Red
+        Write-Host "[ERR] Error generating migration" -ForegroundColor Red
     }
 }  catch {
-    Write-Host "❌ Произошла ошибка: $_" -ForegroundColor Red
+    Write-Host "[ERR] An error occurred: $_" -ForegroundColor Red
 }
 
-# Показываем список миграций
-Write-Host "`n📋 Текущие миграции:" -ForegroundColor Blue
+# Show list of migrations
+Write-Host "`n[LIST] Current migrations:" -ForegroundColor Blue
 Get-ChildItem -Path "src/migrations" -Filter "*.ts" | Sort-Object Name | ForEach-Object {
-    Write-Host "   📄 $($_.Name)" -ForegroundColor Gray
+    Write-Host "   [FILE] $($_.Name)" -ForegroundColor Gray
 }
 
-Write-Host "`n💡 Для применения миграции используйте: .\run-migration.ps1" -ForegroundColor Cyan 
+Write-Host "`n[TIP] To apply migration use: .\run-migration.ps1" -ForegroundColor Cyan 

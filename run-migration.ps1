@@ -1,5 +1,5 @@
 # run-migration.ps1
-# Скрипт для выполнения миграций в auth-service
+# Script for running migrations in auth-service
 
 param(
     [switch]$Revert,
