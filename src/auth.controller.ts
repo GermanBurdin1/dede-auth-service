@@ -1,25 +1,22 @@
-import { Controller, Post, Body, BadRequestException, Get, Query, Param, UseGuards, Req, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Logger, Param, Post, Query } from '@nestjs/common';
 import { UsersService } from './users/users.service';
-import { Logger } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { TeacherProfileService } from './users/teacher/teacher-profile.service';
-// import { AuthGuard } from '@nestjs/passport';
-// import { JwtService } from '@nestjs/jwt';
-
+import { MailService } from './services/mail.service';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Controller('auth')
 export class AuthController {
+
 	private readonly logger = new Logger(AuthController.name);
 
 	constructor(
 		private readonly usersService: UsersService,
 		private teacherProfileService: TeacherProfileService,
+		private readonly mailService: MailService,
 		// private readonly jwtService: JwtService,
 	) { }
 
-	/**
-	 * Получить статистику регистрации пользователей за период
-	 */
 	@Get('users/stats')
 	async getUsersStats(
 		@Query('startDate') startDate: string,
@@ -48,6 +45,7 @@ export class AuthController {
 			id: user.id_users,
 			name: user.name,
 			surname: user.surname,
+			isEmailConfirmed: user.is_email_confirmed,
 		};
 	}
 
@@ -73,16 +71,30 @@ export class AuthController {
 
 		this.logger.log(`User created: ${user.email} [${user.roles.join(', ')}]`);
 
+		// Отправляем письмо подтверждения для новых пользователей
+		if (!user.is_email_confirmed) {
+			try {
+				// Создаем простой токен для подтверждения (без сохранения в БД)
+				const confirmationToken = crypto.randomBytes(32).toString('hex');
+				
+				// Отправляем письмо с токеном
+				await this.mailService.sendVerificationEmail(user.email, confirmationToken);
+				this.logger.log(`Confirmation email sent to ${user.email}`);
+			} catch (error) {
+				this.logger.error(`Failed to send confirmation email to ${user.email}:`, error);
+				// Не прерываем регистрацию из-за ошибки отправки письма
+			}
+		}
+
 		return {
 			id: user.id_users,
 			email: user.email,
 			roles: user.roles,
 			name: user.name,
-			surname: user.surname
+			surname: user.surname,
+			isEmailConfirmed: user.is_email_confirmed
 		};
 	}
-
-
 
 	@Post('login')
 	async login(@Body() body: { email: string; password: string }) {
@@ -107,17 +119,77 @@ export class AuthController {
 			id: user.id_users,
 			email: user.email,
 			roles: user.roles,
-			currentRole: user.current_role,
-			name: user.name,         // ← вот это
-			surname: user.surname
+			name: user.name,
+			surname: user.surname,
+			isEmailConfirmed: user.is_email_confirmed
 		};
+	}
+
+	@Post('confirm-email')
+	async confirmEmail(@Body() body: { email: string; token?: string }) {
+		this.logger.log(`Email confirmation attempt for: ${body.email}`);
+
+		try {
+			// Простая логика подтверждения без проверки токена
+			// В будущем можно добавить более сложную логику с проверкой токена
+			const success = await this.usersService.confirmEmail(body.email);
+			
+			if (success) {
+				this.logger.log(`Email confirmed successfully for: ${body.email}`);
+				return { 
+					success: true, 
+					message: 'Email confirmed successfully' 
+				};
+			} else {
+				throw new BadRequestException('Failed to confirm email');
+			}
+		} catch (error) {
+			this.logger.error(`Email confirmation failed for ${body.email}:`, error);
+			throw new BadRequestException('Email confirmation failed');
+		}
+	}
+
+	@Post('resend-confirmation')
+	async resendConfirmation(@Body() body: { email: string }) {
+		this.logger.log(`Resend confirmation request for: ${body.email}`);
+
+		try {
+			const user = await this.usersService.findByEmail(body.email);
+			if (!user) {
+				throw new BadRequestException('Utilisateur non trouvé');
+			}
+
+			if (user.is_email_confirmed) {
+				return { 
+					success: true, 
+					message: 'Email already confirmed' 
+				};
+			}
+
+			// Создаем новый токен и отправляем письмо
+			const confirmationToken = crypto.randomBytes(32).toString('hex');
+			await this.mailService.sendVerificationEmail(user.email, confirmationToken);
+			
+			this.logger.log(`Confirmation email resent to ${user.email}`);
+			return { 
+				success: true, 
+				message: 'Confirmation email sent' 
+			};
+		} catch (error) {
+			this.logger.error(`Failed to resend confirmation email:`, error);
+			throw new BadRequestException('Failed to send confirmation email');
+		}
 	}
 
 	@Get('check-email')
 	async checkEmail(@Query('email') email: string) {
 		const user = await this.usersService.findByEmail(email);
 		if (user) {
-			return { exists: true, roles: user.roles };
+			return { 
+				exists: true, 
+				roles: user.roles,
+				isEmailConfirmed: user.is_email_confirmed
+			};
 		}
 		return { exists: false };
 	}
@@ -156,9 +228,9 @@ export class AuthController {
 		const enrichedTeachers = await Promise.all(
 			teachers.map(async (t) => {
 				try {
-					const profile = await this.teacherProfileService.getFullProfileByUserId(t.id);
+					const profile = await this.teacherProfileService.getFullProfileByUserId(t.id_users);
 					return {
-						id: t.id,
+						id: t.id_users,
 						name: `${t.name ?? ''} ${t.surname ?? ''}`.trim() || t.email,
 						email: t.email,
 						photoUrl: profile.photo_url,
@@ -176,50 +248,8 @@ export class AuthController {
 			})
 		);
 
-
 		const valid = enrichedTeachers.filter(t => t !== null);
 
 		return { data: valid, total: valid.length };
 	}
-
-	@Post('verify-email')
-	async verifyEmail(@Body() body: { token: string }) {
-		const user = await this.usersService.findByToken(body.token);
-		if (!user) {
-			throw new BadRequestException('Token invalide ou expiré');
-		}
-		user.is_email_confirmed = true;
-		user.email_confirm_token = null;
-		await this.usersService.save(user);
-		return { message: 'Email confirmé avec succès' };
-	}
-
-	// @Get('oauth/google')
-	// @UseGuards(AuthGuard('google'))
-	// async googleAuth() {
-	// 	// Passport перенаправит на Google
-	// }
-
-	// @Get('oauth/google/callback')
-	// @UseGuards(AuthGuard('google'))
-	// async googleAuthCallback(@Req() req, @Res() res) {
-	// 	// req.user содержит данные Google
-	// 	let user = await this.usersService.findByEmail(req.user.email);
-	// 	if (!user) {
-	// 		// Создаём пользователя, если не найден
-	// 		user = await this.usersService.createOrUpdateUser(
-	// 			req.user.email,
-	// 			'', // пароль не нужен для OAuth
-	// 			['student'], // или определите роль по логике
-	// 			req.user.name || '',
-	// 			''
-	// 		);
-	// 	}
-	// 	// Генерируем JWT
-	// 	const payload = { sub: user.id_users, email: user.email, roles: user.roles };
-	// 	const token = this.jwtService.sign(payload);
-	// 	// Редиректим на фронт с токеном
-	// 	res.redirect(`http://localhost:4200/oauth-success?token=${token}`);
-	// }
-
 }

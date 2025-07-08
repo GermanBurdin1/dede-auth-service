@@ -43,12 +43,12 @@ import { StudentGoal } from './goals/student-goal.entity';
 		// MongoDB (Mongoose)
 		//MongooseModule.forRoot(process.env.MONGO_URI),
 
-		UsersModule,
-		//ProfilesModule,
-		AuthModule,
-		TeacherProfileModule,
-		TeacherReviewModule,
-		GoalsModule
-	],
+			UsersModule,
+	//ProfilesModule,
+	AuthModule,
+	TeacherProfileModule,
+	TeacherReviewModule,
+	GoalsModule,
+],
 })
 export class AppModule { }

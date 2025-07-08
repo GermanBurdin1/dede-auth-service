@@ -14,11 +14,11 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ default: false })
+  is_email_confirmed: boolean;
+
   @Column("text", { array: true }) // ← массив ролей
   roles: string[];
-
-  @Column({ nullable: true })
-  current_role: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
@@ -28,12 +28,5 @@ export class User {
 
   @Column({ nullable: true })
   surname: string;
-
-  @Column({ default: false })
-  is_email_confirmed: boolean;
-
-  @Column({ nullable: true })
-  email_confirm_token: string | null;
-
 }
 
