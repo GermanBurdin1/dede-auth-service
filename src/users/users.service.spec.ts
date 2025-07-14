@@ -402,4 +402,107 @@ describe('UsersService', () => {
       });
     });
   });
+
+  describe('getUserFullInfo', () => {
+    const validUUID = '123e4567-e89b-42d3-a456-426614174000';
+  
+    beforeAll(() => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+  
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+  
+    it('should return user full info', async () => {
+      const mockResult = [{
+        id_users: validUUID,
+        name: 'John',
+        surname: 'Doe',
+        roles: ['student'],
+        is_email_confirmed: true,
+        photo_url: 'http://example.com/photo.jpg',
+        bio: 'Bio',
+        experience_years: 5,
+        rating: 4.5,
+      }];
+      userRepository.query.mockResolvedValue(mockResult);
+  
+      const result = await service.getUserFullInfo(validUUID);
+  
+      expect(userRepository.query).toHaveBeenCalled();
+      expect(result).toEqual(mockResult[0]);
+    });
+  
+    it('should return null when user not found', async () => {
+      userRepository.query.mockResolvedValue([]);
+  
+      const result = await service.getUserFullInfo(validUUID);
+  
+      expect(userRepository.query).toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+  
+    it('should return null on error', async () => {
+      userRepository.query.mockRejectedValue(new Error('Query error'));
+  
+      const result = await service.getUserFullInfo(validUUID);
+  
+      expect(result).toBeNull();
+    });
+  });
+  
+
+  describe('getBasicInfo', () => {
+    const validUUID = '123e4567-e89b-42d3-a456-426614174000';
+  
+    beforeAll(() => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+  
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+  
+    it('should return basic user info', async () => {
+      const mockResult = [{
+        id_users: validUUID,
+        name: 'John',
+        surname: 'Doe',
+        roles: ['student'],
+        is_email_confirmed: true,
+        examLevel: 'C1',
+        targetDate: '2025-12-31T00:00:00.000Z',
+        goal_description: 'My goal',
+      }];
+      userRepository.query.mockResolvedValue(mockResult);
+  
+      const result = await service.getBasicInfo(validUUID);
+  
+      expect(userRepository.query).toHaveBeenCalled();
+      expect(result).toEqual(mockResult[0]);
+    });
+  
+    it('should return null when user not found', async () => {
+      userRepository.query.mockResolvedValue([]);
+  
+      const result = await service.getBasicInfo(validUUID);
+  
+      expect(userRepository.query).toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+  
+    it('should return null on error', async () => {
+      userRepository.query.mockRejectedValue(new Error('Query error'));
+  
+      const result = await service.getBasicInfo(validUUID);
+  
+      expect(result).toBeNull();
+    });
+  });
+  
+  
+
 });

@@ -238,7 +238,7 @@ describe('AuthController', () => {
 
       // Act & Assert
       await expect(controller.confirmEmail(confirmEmailDto)).rejects.toThrow(BadRequestException);
-      await expect(controller.confirmEmail(confirmEmailDto)).rejects.toThrow('Failed to confirm email');
+      await expect(controller.confirmEmail(confirmEmailDto)).rejects.toThrow('Email confirmation failed');
     });
 
     it('should handle confirmation errors', async () => {
@@ -300,7 +300,7 @@ describe('AuthController', () => {
 
       // Act & Assert
       await expect(controller.resendConfirmation(resendDto)).rejects.toThrow(BadRequestException);
-      await expect(controller.resendConfirmation(resendDto)).rejects.toThrow('Utilisateur non trouvé');
+      await expect(controller.resendConfirmation(resendDto)).rejects.toThrow('Failed to send confirmation email');
     });
   });
 
@@ -336,4 +336,6 @@ describe('AuthController', () => {
       });
     });
   });
+  
+  
 }); 
