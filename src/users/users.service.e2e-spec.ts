@@ -7,7 +7,7 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
 
-// ⚡ Вспомогательная функция для создания юзера напрямую
+// fonction helper pour créer un user direct en db
 const createTestUser = async (repo: Repository<User>, data: Partial<User>) => {
   const user = repo.create(data);
   return await repo.save(user);
@@ -26,7 +26,7 @@ describe('AuthController (e2e)', () => {
           type: 'sqlite',
           database: ':memory:',
           entities: [User],
-          synchronize: true, // Только для тестов
+          synchronize: true, // juste pour les tests
         }),
         TypeOrmModule.forFeature([User]),
       ],
@@ -40,7 +40,7 @@ describe('AuthController (e2e)', () => {
     userRepo = moduleFixture.get(getRepositoryToken(User));
     mailService = moduleFixture.get(MailService);
 
-    // Мок почты, чтобы не слать письма
+    // on mock le mail service pour pas envoyer de vrais emails
     jest.spyOn(mailService, 'sendVerificationEmail').mockImplementation(async () => {});
   });
 
@@ -48,7 +48,7 @@ describe('AuthController (e2e)', () => {
     await app.close();
   });
 
-  it('/auth/register (POST) — регистрирует нового пользователя', async () => {
+  it('/auth/register (POST) — enregistre un nouvel utilisateur', async () => {
     const payload = {
       email: 'test@example.com',
       password: 'password123',
@@ -67,15 +67,16 @@ describe('AuthController (e2e)', () => {
     expect(res.body.roles).toContain('student');
     expect(res.body.isEmailConfirmed).toBe(false);
 
+    // TODO : vérifier que le password est bien hashé
     const dbUser = await userRepo.findOneBy({ email: payload.email });
     expect(dbUser).toBeDefined();
   });
 
-  it('/auth/login (POST) — успешно логинит', async () => {
+  it('/auth/login (POST) — connecte avec succès', async () => {
     const email = 'login@example.com';
     const plainPassword = 'mypassword';
 
-    // Создаём тестового юзера с хэшированным паролем
+    // on crée un user test avec mot de passe hashé
     const bcrypt = require('bcrypt');
     const hash = await bcrypt.hash(plainPassword, 10);
 
@@ -96,7 +97,7 @@ describe('AuthController (e2e)', () => {
     expect(res.body.roles).toContain('student');
   });
 
-  it('/auth/check-email (GET) — проверяет существование email', async () => {
+  it('/auth/check-email (GET) — vérifie si email existe', async () => {
     const email = 'check@example.com';
     await createTestUser(userRepo, {
       email,
@@ -116,7 +117,7 @@ describe('AuthController (e2e)', () => {
     expect(res.body.isEmailConfirmed).toBe(true);
   });
 
-  it('/auth/confirm-email (POST) — подтверждает email', async () => {
+  it('/auth/confirm-email (POST) — confirme l\'email', async () => {
     const email = 'confirm@example.com';
     await createTestUser(userRepo, {
       email,
@@ -133,6 +134,7 @@ describe('AuthController (e2e)', () => {
 
     expect(res.body.success).toBe(true);
 
+    // TODO : tester aussi le cas où le token est fourni
     const dbUser = await userRepo.findOneBy({ email });
     expect(dbUser.is_email_confirmed).toBe(true);
   });

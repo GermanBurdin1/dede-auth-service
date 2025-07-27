@@ -21,7 +21,7 @@ export class TeacherReview {
   @CreateDateColumn()
   created_at: Date;
 
-  // 👇 Опционально: связи с User (для автозагрузки имени)
+  // relations avec User pour récupérer automatiquement les noms
   @ManyToOne(() => User)
   @JoinColumn({ name: 'teacher_id' })
   teacher: User;

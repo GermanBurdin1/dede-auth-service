@@ -53,8 +53,6 @@ describe('UsersService', () => {
 
       jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('hashed-password'));
 
-
-
       const result = await service.createOrUpdateUser('test@example.com', 'pass123', ['student'], 'John', 'Doe');
       expect(repo.create).toHaveBeenCalled();
       expect(repo.save).toHaveBeenCalled();
@@ -76,7 +74,7 @@ describe('UsersService', () => {
 
       await expect(
         service.createOrUpdateUser('test@example.com', 'pass123', ['student'], 'John', 'Doe'),
-      ).rejects.toThrow('Вы уже зарегистрированы с этой ролью');
+      ).rejects.toThrow('Vous êtes déjà inscrit avec ce rôle');
     });
 
     it('should throw if trying to add more than two roles', async () => {
@@ -84,11 +82,11 @@ describe('UsersService', () => {
 
       await expect(
         service.createOrUpdateUser('test@example.com', 'pass123', ['admin'], 'John', 'Doe'),
-      ).rejects.toThrow('Нельзя добавить более двух ролей для одного пользователя');
+      ).rejects.toThrow('Impossible d\'ajouter plus de deux rôles pour un utilisateur');
     });
   });
 
-  it('should confirm email', async () => {
+  it('should confirm email correctement', async () => {
     repo.findOne.mockResolvedValue({ ...mockUser, is_email_confirmed: false } as any);
     repo.save.mockResolvedValue({ ...mockUser, is_email_confirmed: true });
 
@@ -122,6 +120,7 @@ describe('UsersService', () => {
 
   it('should return true if email already confirmed when sending confirmation email', async () => {
     repo.findOne.mockResolvedValue({ ...mockUser, is_email_confirmed: true });
+    // TODO : peut-être qu'on devrait pas renvoyer d'email si déjà confirmé
     const result = await service.sendConfirmationEmail('test@example.com');
     expect(result).toBe(true);
   });
@@ -160,6 +159,7 @@ describe('UsersService', () => {
   it('should getBasicInfo', async () => {
     repo.query.mockResolvedValue([{ id_users: 'uuid-123', name: 'John', surname: 'Doe' }]);
 
+    // TODO : tester avec des objectifs étudiants aussi
     const result = await service.getBasicInfo('uuid-123');
     expect(result).toHaveProperty('id_users');
   });

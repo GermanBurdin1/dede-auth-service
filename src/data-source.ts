@@ -6,7 +6,7 @@ import { TeacherCertificate } from './users/teacher/teacher_certificates.entity'
 import { StudentGoal } from './goals/student-goal.entity';
 import * as dotenv from 'dotenv';
 
-dotenv.config(); // 👈 подгружаем .env
+dotenv.config(); // charge les variables d'environnement
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -15,7 +15,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  synchronize: false,
+  synchronize: false, // TODO : vérifier que c'est bien à false en prod
   logging: true,
   entities: [User, TeacherProfile, TeacherSpecialization, TeacherCertificate, StudentGoal],
   migrations: ['src/migrations/*.ts'],

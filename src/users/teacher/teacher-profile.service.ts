@@ -31,6 +31,7 @@ export class TeacherProfileService {
     const existing = await this.profileRepo.findOne({ where: { user: { id_users: userId } } });
     if (existing) return existing;
 
+    // TODO : définir des valeurs par défaut plus intelligentes
     const profile = this.profileRepo.create({
       user,
       photo_url: '',
@@ -95,12 +96,12 @@ export class TeacherProfileService {
   });
   if (!profile) throw new NotFoundException('Profile not found');
 
-  // Обновление профиля
+  // mise à jour du profil enseignant
   profile.bio = data.bio ?? profile.bio;
   profile.price = data.price ?? profile.price;
   profile.experience_years = data.experienceYears ?? profile.experience_years;
 
-  // Обновление пользователя
+  // mise à jour des infos utilisateur
   if (data.name || data.surname) {
     profile.user.name = data.name ?? profile.user.name;
     profile.user.surname = data.surname ?? profile.user.surname;
@@ -109,6 +110,7 @@ export class TeacherProfileService {
 
   await this.profileRepo.save(profile);
 
+  // TODO : optimiser ces suppressions/insertions
   if (data.specializations) {
     await this.specRepo.delete({ teacherProfile: { id_teacher_profile: profile.id_teacher_profile } });
     await this.specRepo.save(

@@ -17,7 +17,7 @@ export class User {
   @Column({ default: false })
   is_email_confirmed: boolean;
 
-  @Column("text", { array: true }) // ← массив ролей
+  @Column("text", { array: true }) // tableau des rôles
   roles: string[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

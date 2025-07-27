@@ -12,13 +12,13 @@ export class GoalsService {
   ) {}
 
   async createGoal(studentId: string, createGoalDto: CreateGoalDto): Promise<StudentGoal> {
-    // Деактивируем предыдущие цели
+    // on désactive les objectifs précédents
     await this.goalRepository.update(
       { studentId, isActive: true },
       { isActive: false }
     );
 
-    // Создаем новую цель
+    // création du nouvel objectif
     const goal = this.goalRepository.create({
       studentId,
       examLevel: createGoalDto.examLevel,
@@ -37,6 +37,7 @@ export class GoalsService {
   }
 
   async getAllGoals(studentId: string): Promise<StudentGoal[]> {
+    // TODO : ajouter la pagination pour les étudiants avec beaucoup d'objectifs
     return this.goalRepository.find({
       where: { studentId },
       order: { createdAt: 'DESC' }
@@ -60,7 +61,7 @@ export class GoalsService {
     await this.goalRepository.update(goalId, { isActive: false });
   }
 
-  // Метод для получения доступных уровней экзаменов
+  // récupère les niveaux d'examen disponibles
   getAvailableExamLevels(): ExamLevel[] {
     return Object.values(ExamLevel);
   }

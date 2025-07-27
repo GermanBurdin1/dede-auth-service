@@ -34,9 +34,9 @@ export class AuthController {
 
 	@Get('users/:id')
 	async getUser(@Param('id') id: string) {
-		console.log('⚡ GET /auth/users/:id HIT', id);
+		console.log('[AuthController] GET /auth/users/:id appelé avec id:', id);
 		const user = await this.usersService.getBasicInfo(id);
-		console.log('🧑 User extracted from DB:', user);
+		console.log('[AuthController] Utilisateur extrait de la DB:', user);
 		if (!user) {
 			throw new BadRequestException('Utilisateur non trouvé');
 		}
@@ -71,18 +71,18 @@ export class AuthController {
 
 		this.logger.log(`User created: ${user.email} [${user.roles.join(', ')}]`);
 
-		// Отправляем письмо подтверждения для новых пользователей
+		// on envoie un email de confirmation pour les nouveaux utilisateurs
 		if (!user.is_email_confirmed) {
 			try {
-				// Создаем простой токен для подтверждения (без сохранения в БД)
+				// génère un token simple pour la confirmation (pas de sauvegarde en BDD)
 				const confirmationToken = crypto.randomBytes(32).toString('hex');
 				
-				// Отправляем письмо с токеном
+				// envoie l'email avec le token
 				await this.mailService.sendVerificationEmail(user.email, confirmationToken);
 				this.logger.log(`Confirmation email sent to ${user.email}`);
 			} catch (error) {
 				this.logger.error(`Failed to send confirmation email to ${user.email}:`, error);
-				// Не прерываем регистрацию из-за ошибки отправки письма
+				// on ne stoppe pas l'inscription à cause d'une erreur d'envoi d'email
 			}
 		}
 
@@ -130,8 +130,8 @@ export class AuthController {
 		this.logger.log(`Email confirmation attempt for: ${body.email}`);
 
 		try {
-			// Простая логика подтверждения без проверки токена
-			// В будущем можно добавить более сложную логику с проверкой токена
+			// logique simple de confirmation sans vérifier le token
+			// TODO : ajouter une logique plus complexe avec vérification du token
 			const success = await this.usersService.confirmEmail(body.email);
 			
 			if (success) {
@@ -166,7 +166,7 @@ export class AuthController {
 				};
 			}
 
-			// Создаем новый токен и отправляем письмо
+			// génère un nouveau token et envoie l'email
 			const confirmationToken = crypto.randomBytes(32).toString('hex');
 			await this.mailService.sendVerificationEmail(user.email, confirmationToken);
 			
@@ -225,6 +225,7 @@ export class AuthController {
 			filters
 		);
 
+		// TODO : extraire cette logique dans un service dédié
 		const enrichedTeachers = await Promise.all(
 			teachers.map(async (t) => {
 				try {
@@ -243,7 +244,7 @@ export class AuthController {
 						certificates: profile.certificates ?? [],
 					};
 				} catch (err) {
-					return null;
+					return null; // pas de profil = prof masqué
 				}
 			})
 		);

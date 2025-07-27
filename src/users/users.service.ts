@@ -28,11 +28,11 @@ export class UsersService {
 			const newRoles = roles.filter(role => !existingRoles.includes(role));
 
 			if (newRoles.length === 0) {
-				throw new BadRequestException('Вы уже зарегистрированы с этой ролью');
+				throw new BadRequestException('Vous êtes déjà inscrit avec ce rôle');
 			}
 
 			if (existingRoles.length + newRoles.length > 2) {
-				throw new BadRequestException('Нельзя добавить более двух ролей для одного пользователя');
+				throw new BadRequestException('Impossible d\'ajouter plus de deux rôles pour un utilisateur');
 			}
 
 			existing.roles = [...existingRoles, ...newRoles];
@@ -42,7 +42,7 @@ export class UsersService {
 			return this.userRepo.save(existing);
 		}
 
-		// Новый пользователь
+		// création d'un nouvel utilisateur
 		const hash = await bcrypt.hash(password, 10);
 
 		const user = this.userRepo.create({
@@ -52,7 +52,7 @@ export class UsersService {
 			name,
 			surname,
 			is_active: true,
-			is_email_confirmed: false, // Новые пользователи должны подтвердить email
+			is_email_confirmed: false, // les nouveaux utilisateurs doivent confirmer leur email
 		});
 
 		await this.userRepo.save(user);
@@ -69,7 +69,7 @@ export class UsersService {
 		return this.userRepo.save(user);
 	}
 
-	// Новые методы для email confirmation
+	// méthodes pour la confirmation d'email
 	async confirmEmail(email: string): Promise<boolean> {
 		try {
 			const user = await this.findByEmail(email);
@@ -105,8 +105,8 @@ export class UsersService {
 	}
 
 	async sendConfirmationEmail(email: string): Promise<boolean> {
-		// Логика отправки подтверждающего письма
-		// Будет вызываться из auth controller с MailService
+		// logique d'envoi d'email de confirmation
+		// sera appelée depuis auth controller avec MailService
 		const user = await this.findByEmail(email);
 		if (!user) {
 			return false;
@@ -117,7 +117,7 @@ export class UsersService {
 			return true;
 		}
 
-		// Возвращаем true, фактическая отправка будет в auth controller
+		// on retourne true, l'envoi réel sera fait dans auth controller
 		return true;
 	}
 
@@ -126,6 +126,7 @@ export class UsersService {
 		limit: number,
 		filters?: any
 	): Promise<[User[], number]> {
+		// TODO : implémenter les filtres de recherche
 		return this.userRepo
 			.createQueryBuilder('user')
 			.where(`'teacher' = ANY(user.roles)`)
@@ -135,14 +136,14 @@ export class UsersService {
 	}
 
 	/**
-	 * Возвращает детальную информацию о пользователе для заголовка
+	 * Récupère les informations détaillées d'un utilisateur pour l'en-tête
 	 */
 	async getUserFullInfo(userId: string): Promise<any | null> {
-		console.log('📘 [DB] getUserFullInfo called with id:', userId);
+		console.log('[DB] getUserFullInfo appelé avec id:', userId);
 
 		const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 		if (!uuidRegex.test(userId)) {
-			console.error('❌ [DB] Invalid UUID format:', userId);
+			console.error('[DB] Format UUID invalide:', userId);
 			return null;
 		}
 
@@ -167,25 +168,25 @@ export class UsersService {
 			const user = result[0];
 
 			if (!user) {
-				console.warn('⚠️ [DB] No user found with id:', userId);
+				console.warn('[DB] Aucun utilisateur trouvé avec id:', userId);
 				return null;
 			}
 
-			console.log('✅ [DB] User found with full info:', user);
+			console.log('[DB] Utilisateur trouvé avec infos complètes:', user);
 			return user;
 		} catch (error) {
-			console.error('❌ [DB] Error fetching user full info:', error);
+			console.error('[DB] Erreur lors de la récupération des infos utilisateur:', error);
 			return null;
 		}
 	}
 
 	async getBasicInfo(userId: string): Promise<any | null> {
-		console.log('📘 [DB] getBasicInfo called with id:', userId);
+		console.log('[DB] getBasicInfo appelé avec id:', userId);
 
-		// Валидация UUID
+		// validation UUID
 		const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 		if (!uuidRegex.test(userId)) {
-			console.error('❌ [DB] Invalid UUID format:', userId);
+			console.error('[DB] Format UUID invalide:', userId);
 			return null;
 		}
 
@@ -209,26 +210,26 @@ export class UsersService {
 			const user = result[0];
 
 			if (!user) {
-				console.warn('⚠️ [DB] No user found with id:', userId);
+				console.warn('[DB] Aucun utilisateur trouvé avec id:', userId);
 				return null;
 			}
 
-			console.log('✅ [DB] User found with goal info:', user);
+			console.log('[DB] Utilisateur trouvé avec infos objectif:', user);
 			return user;
 		} catch (error) {
-			console.error('❌ [DB] Error fetching user info (raw SQL):', error);
+			console.error('[DB] Erreur lors de la récupération des infos utilisateur (SQL brut):', error);
 			return null;
 		}
 	}
 
 	/**
-	 * Получить статистику регистрации пользователей за заданный период
+	 * Récupère les statistiques d'inscription des utilisateurs sur une période donnée
 	 */
 	async getUserRegistrationStats(startDate: Date, endDate: Date) {
 		try {
-			this.logger.log(`📊 Getting user registration stats from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+			this.logger.log(`Récupération des stats d'inscription du ${startDate.toISOString()} au ${endDate.toISOString()}`);
 
-			// Используем только raw SQL для работы с PostgreSQL массивами
+			// on utilise uniquement du SQL brut pour travailler avec les tableaux PostgreSQL
 			const result = await this.userRepo.query(`
 				SELECT 
 					COUNT(*) FILTER (WHERE 'student' = ANY(roles)) as student_count,
@@ -243,7 +244,7 @@ export class UsersService {
 			const newTeachers = parseInt(stats.teacher_count) || 0;
 			const confirmedEmails = parseInt(stats.confirmed_emails_count) || 0;
 			
-			this.logger.log(`📊 Stats: ${newStudents} students, ${newTeachers} teachers, ${confirmedEmails} confirmed emails`);
+			this.logger.log(`Stats: ${newStudents} étudiants, ${newTeachers} enseignants, ${confirmedEmails} emails confirmés`);
 
 			return {
 				newStudents,
@@ -255,7 +256,7 @@ export class UsersService {
 				}
 			};
 		} catch (error) {
-			this.logger.error('❌ Error getting user registration stats:', error);
+			this.logger.error('Erreur lors de la récupération des stats d\'inscription:', error);
 			return { 
 				newStudents: 0, 
 				newTeachers: 0,

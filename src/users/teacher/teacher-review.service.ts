@@ -13,13 +13,13 @@ export class TeacherReviewService {
   async getReviewsByTeacher(teacherId: string) {
   const reviews = await this.reviewRepo.find({
     where: { teacher_id: teacherId },
-    relations: ['student'], // ← тянем студента
+    relations: ['student'], // on récupère les infos de l'étudiant
     order: { created_at: 'DESC' },
   });
 
   return reviews.map(r => ({
     id: r.id_review,
-    studentName: r.student?.email ?? 'Anonyme', // имя студента
+    studentName: r.student?.email ?? 'Anonyme', // nom de l'étudiant ou anonyme
     rating: r.rating,
     comment: r.content,
     date: r.created_at.toISOString()
@@ -27,6 +27,7 @@ export class TeacherReviewService {
 }
 
   async addReview(teacherId: string, studentId: string, content: string, rating: number) {
+    // TODO : valider le rating entre 1 et 5
     const review = this.reviewRepo.create({
       teacher_id: teacherId,
       student_id: studentId,

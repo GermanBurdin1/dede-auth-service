@@ -15,7 +15,7 @@ export class GoalsController {
 
   @Post()
   async createGoal(@Body() createGoalDto: CreateGoalDto, @Req() req: any) {
-    const studentId = req.user?.id || req.body.studentId; // Получаем из токена или тела запроса
+    const studentId = req.user?.id || req.body.studentId; // récupéré depuis le token ou le body de la requête
     return this.goalsService.createGoal(studentId, createGoalDto);
   }
 
@@ -26,6 +26,7 @@ export class GoalsController {
 
   @Get('student/:studentId')
   async getAllGoals(@Param('studentId') studentId: string) {
+    // TODO : ajouter du cache pour éviter les requêtes répétées
     return this.goalsService.getAllGoals(studentId);
   }
 

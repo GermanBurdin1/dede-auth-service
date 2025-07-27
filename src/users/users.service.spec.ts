@@ -146,7 +146,7 @@ describe('UsersService', () => {
           createUserDto.name,
           createUserDto.surname,
         )
-      ).rejects.toThrow('Вы уже зарегистрированы с этой ролью');
+      ).rejects.toThrow('Vous êtes déjà inscrit avec ce rôle');
     });
 
     it('should throw BadRequestException when trying to add more than 2 roles', async () => {
@@ -172,7 +172,7 @@ describe('UsersService', () => {
           createUserDto.name,
           createUserDto.surname,
         )
-      ).rejects.toThrow('Нельзя добавить более двух ролей для одного пользователя');
+      ).rejects.toThrow('Impossible d\'ajouter plus de deux rôles pour un utilisateur');
     });
   });
 
@@ -391,6 +391,7 @@ describe('UsersService', () => {
       const result = await service.getUserRegistrationStats(startDate, endDate);
 
       // Assert
+      // TODO : peut-etre qu'on devrait logger cette erreur quelque part
       expect(result).toEqual({
         newStudents: 0,
         newTeachers: 0,
@@ -407,6 +408,7 @@ describe('UsersService', () => {
     const validUUID = '123e4567-e89b-42d3-a456-426614174000';
   
     beforeAll(() => {
+      // on mock console pour pas polluer les logs de test
       jest.spyOn(console, 'error').mockImplementation(() => {});
       jest.spyOn(console, 'log').mockImplementation(() => {});
     });
@@ -449,6 +451,7 @@ describe('UsersService', () => {
   
       const result = await service.getUserFullInfo(validUUID);
   
+      // TODO : verifier que l'erreur est bien loggée
       expect(result).toBeNull();
     });
   });
@@ -458,6 +461,7 @@ describe('UsersService', () => {
     const validUUID = '123e4567-e89b-42d3-a456-426614174000';
   
     beforeAll(() => {
+      // mock console pour éviter spam dans les tests
       jest.spyOn(console, 'error').mockImplementation(() => {});
       jest.spyOn(console, 'log').mockImplementation(() => {});
     });
@@ -502,7 +506,6 @@ describe('UsersService', () => {
       expect(result).toBeNull();
     });
   });
-  
   
 
 });

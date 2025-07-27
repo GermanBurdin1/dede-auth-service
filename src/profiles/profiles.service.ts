@@ -25,7 +25,7 @@ export class ProfilesService {
 			theme?: string;
 		};
 	}) {
-		console.log('[ProfilesService] Upserting profile for:', data.user_id);
+		console.log('[ProfilesService] Upsert du profil pour:', data.user_id);
 
 		return this.profileModel.findOneAndUpdate(
 			{ user_id: data.user_id },
@@ -44,8 +44,8 @@ export class ProfilesService {
 
 
 	async updateProfile(user_id: string, updates: Partial<any>) {
-		console.log('[ProfilesService] Updating profile for user_id:', user_id);
-		console.log('[ProfilesService] Updates object:', updates);
+		console.log('[ProfilesService] Mise à jour du profil pour user_id:', user_id);
+		console.log('[ProfilesService] Objet de mise à jour:', updates);
 
 		const result = await this.profileModel.findOneAndUpdate(
 			{ user_id },
@@ -53,12 +53,13 @@ export class ProfilesService {
 			{ new: true }
 		).exec();
 
-		console.log('[ProfilesService] Update result:', result);
+		console.log('[ProfilesService] Résultat de la mise à jour:', result);
 		return result;
 	}
 
 
 	async findProfile(user_id: string) {
+		// TODO : ajouter du cache pour éviter les requêtes répétées
 		return this.profileModel.findOne({ user_id }).exec();
 	}
 }

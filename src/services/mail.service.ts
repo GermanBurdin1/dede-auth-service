@@ -47,15 +47,16 @@ export class MailService {
         </div>
       `,
     };
-    console.log('[MailService] Попытка отправить письмо:');
+    console.log('[MailService] Tentative d\'envoi d\'email:');
     console.log('  SMTP_USER:', process.env.SMTP_USER);
     console.log('  To:', to);
-    console.log('  Verification URL:', verificationUrl);
+    console.log('  URL de vérification:', verificationUrl);
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log('[MailService] Письмо успешно отправлено!');
+      console.log('[MailService] Email envoyé avec succès!');
     } catch (err) {
-      console.error('[MailService] Ошибка отправки письма:', err);
+      console.error('[MailService] Erreur lors de l\'envoi d\'email:', err);
+      // TODO : implémenter une file d'attente pour les emails échoués
     }
   }
 }
