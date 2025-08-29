@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength, IsArray, ArrayNotEmpty } from 'class-validator';
+import { NoHtml } from '../validators/no-html.validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Email должен быть валидным' })
@@ -17,9 +18,11 @@ export class RegisterDto {
 
   @IsString({ message: 'Имя должно быть строкой' })
   @IsNotEmpty({ message: 'Имя обязательно' })
+  @NoHtml({ message: 'Имя не должно содержать HTML теги' })
   name: string;
 
   @IsString({ message: 'Фамилия должна быть строкой' })
   @IsNotEmpty({ message: 'Фамилия обязательна' })
+  @NoHtml({ message: 'Фамилия не должна содержать HTML теги' })
   surname: string;
 }
