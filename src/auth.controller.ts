@@ -1,7 +1,16 @@
-import { BadRequestException, Body, Controller, Get, Logger, Param, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Logger, Param, Post, Query, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users/users.service';
 import { TeacherProfileService } from './users/teacher/teacher-profile.service';
 import { MailService } from './services/mail.service';
+import { JwtAuthService } from './auth/jwt.service';
+import { JwtAuthGuard } from './auth/jwt.guard';
+import { RolesGuard } from './auth/roles.guard';
+import { Roles } from './auth/roles.decorator';
+import { LoginDto } from './auth/dto/login.dto';
+import { RegisterDto } from './auth/dto/register.dto';
+import { JwtResponseDto } from './auth/dto/jwt-response.dto';
+import { RefreshTokenDto } from './auth/dto/refresh-token.dto';
+import { ConfirmEmailDto } from './auth/dto/confirm-email.dto';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
@@ -14,9 +23,11 @@ export class AuthController {
 		private readonly usersService: UsersService,
 		private teacherProfileService: TeacherProfileService,
 		private readonly mailService: MailService,
-		// private readonly jwtService: JwtService,
+		private readonly jwtAuthService: JwtAuthService,
 	) { }
 
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles('admin')
 	@Get('users/stats')
 	async getUsersStats(
 		@Query('startDate') startDate: string,
@@ -50,23 +61,15 @@ export class AuthController {
 	}
 
 	@Post('register')
-	async register(
-		@Body() body: {
-			email: string;
-			password: string;
-			roles: string[];
-			name: string;
-			surname: string;
-		}
-	) {
-		this.logger.log(`Register attempt for: ${body.email}, roles: ${body.roles}`);
+	async register(@Body() registerDto: RegisterDto): Promise<JwtResponseDto> {
+		this.logger.log(`Register attempt for: ${registerDto.email}, roles: ${registerDto.roles}`);
 
 		const user = await this.usersService.createOrUpdateUser(
-			body.email,
-			body.password,
-			body.roles,
-			body.name,
-			body.surname
+			registerDto.email,
+			registerDto.password,
+			registerDto.roles,
+			registerDto.name,
+			registerDto.surname
 		);
 
 		this.logger.log(`User created: ${user.email} [${user.roles.join(', ')}]`);
@@ -86,34 +89,56 @@ export class AuthController {
 			}
 		}
 
-		return {
-			id: user.id_users,
-			email: user.email,
-			roles: user.roles,
-			name: user.name,
-			surname: user.surname,
-			isEmailConfirmed: user.is_email_confirmed
-		};
+		// Генерируем JWT токены
+		return await this.jwtAuthService.generateTokens(user);
 	}
 
 	@Post('login')
-	async login(@Body() body: { email: string; password: string }) {
-		this.logger.log(`Login attempt for: ${body.email}`);
+	async login(@Body() loginDto: LoginDto): Promise<JwtResponseDto> {
+		this.logger.log(`Login attempt for: ${loginDto.email}`);
 
-		const user = await this.usersService.findByEmail(body.email);
+		const user = await this.usersService.findByEmail(loginDto.email);
 		if (!user) {
-			this.logger.warn(`Login failed: user not found for ${body.email}`);
+			this.logger.warn(`Login failed: user not found for ${loginDto.email}`);
 			throw new BadRequestException('Utilisateur non trouvé');
 		}
 
-		const isMatch = await bcrypt.compare(body.password, user.password);
-		this.logger.log("bodypassword:" + body.password, "userpassword:" + user.password);
+		const isMatch = await bcrypt.compare(loginDto.password, user.password);
 		if (!isMatch) {
-			this.logger.warn(`Login failed: bad password for ${body.email}`);
+			this.logger.warn(`Login failed: bad password for ${loginDto.email}`);
 			throw new BadRequestException('Mot de passe incorrect');
 		}
 
 		this.logger.log(`Login successful: ${user.email} [${user.roles.join(', ')}]`);
+
+		// Генерируем JWT токены
+		return await this.jwtAuthService.generateTokens(user);
+	}
+
+	@Post('refresh-token')
+	async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+		this.logger.log('Token refresh attempt');
+		
+		try {
+			const newTokens = await this.jwtAuthService.refreshAccessToken(refreshTokenDto.refresh_token);
+			this.logger.log('Token refreshed successfully');
+			return newTokens;
+		} catch (error) {
+			this.logger.warn('Token refresh failed:', error.message);
+			throw new BadRequestException('Invalid refresh token');
+		}
+	}
+
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	@Roles('student', 'teacher', 'admin')
+	@Get('profile')
+	async getProfile(@Request() req) {
+		this.logger.log(`Profile request for user: ${req.user.email}`);
+		
+		const user = await this.usersService.findByEmail(req.user.email);
+		if (!user) {
+			throw new BadRequestException('User not found');
+		}
 
 		return {
 			id: user.id_users,
@@ -126,16 +151,16 @@ export class AuthController {
 	}
 
 	@Post('confirm-email')
-	async confirmEmail(@Body() body: { email: string; token?: string }) {
-		this.logger.log(`Email confirmation attempt for: ${body.email}`);
+	async confirmEmail(@Body() confirmEmailDto: ConfirmEmailDto) {
+		this.logger.log(`Email confirmation attempt for: ${confirmEmailDto.email}`);
 
 		try {
 			// Простая логика подтверждения без проверки токена
 			// В будущем можно добавить более сложную логику с проверкой токена
-			const success = await this.usersService.confirmEmail(body.email);
+			const success = await this.usersService.confirmEmail(confirmEmailDto.email);
 			
 			if (success) {
-				this.logger.log(`Email confirmed successfully for: ${body.email}`);
+				this.logger.log(`Email confirmed successfully for: ${confirmEmailDto.email}`);
 				return { 
 					success: true, 
 					message: 'Email confirmed successfully' 
@@ -144,7 +169,7 @@ export class AuthController {
 				throw new BadRequestException('Failed to confirm email');
 			}
 		} catch (error) {
-			this.logger.error(`Email confirmation failed for ${body.email}:`, error);
+			this.logger.error(`Email confirmation failed for ${confirmEmailDto.email}:`, error);
 			throw new BadRequestException('Email confirmation failed');
 		}
 	}
