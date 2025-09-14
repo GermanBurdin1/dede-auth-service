@@ -82,5 +82,5 @@ jobs:
         # Устанавливаем зависимости на сервере и перезапускаем сервис
         ssh -i ~/.ssh/id_deploy -p "${OVH_PORT:-22}" "${OVH_USER}@${OVH_HOST}" "
           cd ${REMOTE_DIR} && 
-          npm ci --production && 
-          pm2 restart auth-service || pm2 start dist/main.js --name auth-service"
+          npm install --production && 
+          pm2 restart auth-service -f || pm2 start dist/main.js --name auth-service"
