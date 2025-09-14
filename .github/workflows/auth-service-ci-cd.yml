@@ -78,9 +78,6 @@ jobs:
         rsync -avz --exclude='.user.ini' \
           -e "ssh -i ~/.ssh/id_deploy -p ${OVH_PORT:-22}" \
           package.json "${OVH_USER}@${OVH_HOST}:${REMOTE_DIR}/"
-        rsync -avz --exclude='.user.ini' \
-          -e "ssh -i ~/.ssh/id_deploy -p ${OVH_PORT:-22}" \
-          node_modules/ "${OVH_USER}@${OVH_HOST}:${REMOTE_DIR}/node_modules/"
           
         # Устанавливаем зависимости на сервере и перезапускаем сервис
         ssh -i ~/.ssh/id_deploy -p "${OVH_PORT:-22}" "${OVH_USER}@${OVH_HOST}" "
