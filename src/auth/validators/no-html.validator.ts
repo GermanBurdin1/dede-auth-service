@@ -1,14 +1,14 @@
 import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 
 export function NoHtml(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'noHtml',
       target: object.constructor,
       propertyName: propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value: any) {
           if (typeof value !== 'string') return true;
           
           // Проверяем на наличие HTML тегов

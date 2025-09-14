@@ -126,6 +126,11 @@ export class UsersService {
 		limit: number,
 		filters?: any
 	): Promise<[User[], number]> {
+		// Логируем фильтры для отладки (если переданы)
+		if (filters) {
+			this.logger.log(`🔍 Фильтры поиска учителей: ${JSON.stringify(filters)}`);
+		}
+		
 		return this.userRepo
 			.createQueryBuilder('user')
 			.where(`'teacher' = ANY(user.roles)`)

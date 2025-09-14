@@ -6,6 +6,7 @@ import { MailService } from '../services/mail.service';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 // ⚡ Вспомогательная функция для создания юзера напрямую
 const createTestUser = async (repo: Repository<User>, data: Partial<User>) => {
@@ -76,7 +77,6 @@ describe('AuthController (e2e)', () => {
     const plainPassword = 'mypassword';
 
     // Создаём тестового юзера с хэшированным паролем
-    const bcrypt = require('bcrypt');
     const hash = await bcrypt.hash(plainPassword, 10);
 
     await createTestUser(userRepo, {

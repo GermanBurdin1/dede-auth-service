@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { UsersService } from './users/users.service';
 import { TeacherProfileService } from './users/teacher/teacher-profile.service';
 import { MailService } from './services/mail.service';
+import { JwtAuthService } from './auth/jwt.service';
 import { User } from './users/user.entity';
 import * as bcrypt from 'bcrypt';
 
@@ -14,7 +16,6 @@ const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 describe('AuthController', () => {
   let controller: AuthController;
   let usersService: jest.Mocked<UsersService>;
-  let teacherProfileService: jest.Mocked<TeacherProfileService>;
   let mailService: jest.Mocked<MailService>;
 
   const mockUser: Partial<User> = {
@@ -52,6 +53,27 @@ describe('AuthController', () => {
       sendVerificationEmail: jest.fn(),
     };
 
+    const mockJwtService = {
+      verifyAsync: jest.fn(),
+      sign: jest.fn(),
+    };
+
+    const mockJwtAuthService = {
+      generateTokens: jest.fn().mockImplementation((user) => Promise.resolve({
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        user: {
+          id: user.id_users,
+          email: user.email,
+          roles: user.roles,
+          name: user.name,
+          surname: user.surname,
+          isEmailConfirmed: user.is_email_confirmed,
+        },
+        expires_in: 900,
+      })),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
@@ -67,12 +89,19 @@ describe('AuthController', () => {
           provide: MailService,
           useValue: mockMailService,
         },
+        {
+          provide: JwtService,
+          useValue: mockJwtService,
+        },
+        {
+          provide: JwtAuthService,
+          useValue: mockJwtAuthService,
+        },
       ],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
     usersService = module.get(UsersService);
-    teacherProfileService = module.get(TeacherProfileService);
     mailService = module.get(MailService);
   });
 
@@ -111,12 +140,17 @@ describe('AuthController', () => {
         expect.any(String), // confirmation token
       );
       expect(result).toEqual({
-        id: createdUser.id_users,
-        email: createdUser.email,
-        roles: createdUser.roles,
-        name: createdUser.name,
-        surname: createdUser.surname,
-        isEmailConfirmed: createdUser.is_email_confirmed,
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        user: {
+          id: createdUser.id_users,
+          email: createdUser.email,
+          roles: createdUser.roles,
+          name: createdUser.name,
+          surname: createdUser.surname,
+          isEmailConfirmed: createdUser.is_email_confirmed,
+        },
+        expires_in: 900,
       });
     });
 
@@ -134,12 +168,17 @@ describe('AuthController', () => {
       expect(mailService.sendVerificationEmail).toHaveBeenCalled();
       // Registration should still succeed even if email fails
       expect(result).toEqual({
-        id: createdUser.id_users,
-        email: createdUser.email,
-        roles: createdUser.roles,
-        name: createdUser.name,
-        surname: createdUser.surname,
-        isEmailConfirmed: createdUser.is_email_confirmed,
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        user: {
+          id: createdUser.id_users,
+          email: createdUser.email,
+          roles: createdUser.roles,
+          name: createdUser.name,
+          surname: createdUser.surname,
+          isEmailConfirmed: createdUser.is_email_confirmed,
+        },
+        expires_in: 900,
       });
     });
 
@@ -154,7 +193,19 @@ describe('AuthController', () => {
       // Assert
       expect(usersService.createOrUpdateUser).toHaveBeenCalled();
       expect(mailService.sendVerificationEmail).not.toHaveBeenCalled();
-      expect(result.isEmailConfirmed).toBe(true);
+      expect(result).toEqual({
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        user: {
+          id: confirmedUser.id_users,
+          email: confirmedUser.email,
+          roles: confirmedUser.roles,
+          name: confirmedUser.name,
+          surname: confirmedUser.surname,
+          isEmailConfirmed: confirmedUser.is_email_confirmed,
+        },
+        expires_in: 900,
+      });
     });
   });
 
@@ -177,12 +228,17 @@ describe('AuthController', () => {
       expect(usersService.findByEmail).toHaveBeenCalledWith(loginDto.email);
       expect(mockBcrypt.compare).toHaveBeenCalledWith(loginDto.password, user.password);
       expect(result).toEqual({
-        id: user.id_users,
-        email: user.email,
-        roles: user.roles,
-        name: user.name,
-        surname: user.surname,
-        isEmailConfirmed: user.is_email_confirmed,
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        user: {
+          id: user.id_users,
+          email: user.email,
+          roles: user.roles,
+          name: user.name,
+          surname: user.surname,
+          isEmailConfirmed: user.is_email_confirmed,
+        },
+        expires_in: 900,
       });
     });
 

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MongooseModule } from '@nestjs/mongoose';
+//import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 //import { ProfilesModule } from './profiles/profiles.module';
 import { GoalsModule } from './goals/goals.module';

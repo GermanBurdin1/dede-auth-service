@@ -244,7 +244,7 @@ export class AuthController {
 			language,
 		};
 
-		const [teachers, total] = await this.usersService.findTeachersPaginated(
+		const [teachers] = await this.usersService.findTeachersPaginated(
 			pageNum,
 			limitNum,
 			filters
@@ -267,7 +267,7 @@ export class AuthController {
 						specializations: profile.specializations ?? [],
 						certificates: profile.certificates ?? [],
 					};
-				} catch (err) {
+				} catch {
 					return null;
 				}
 			})

@@ -44,7 +44,7 @@ export class JwtAuthService {
   async verifyToken(token: string): Promise<any> {
     try {
       return await this.jwtService.verifyAsync(token);
-    } catch (error) {
+    } catch {
       throw new Error('Invalid token');
     }
   }
@@ -68,7 +68,7 @@ export class JwtAuthService {
         access_token,
         expires_in: 900,
       };
-    } catch (error) {
+    } catch {
       throw new Error('Invalid refresh token');
     }
   }
