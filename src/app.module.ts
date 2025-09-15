@@ -1,3 +1,9 @@
+// Полифилл для crypto в Node.js 18
+import { webcrypto } from 'crypto';
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto;
+}
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 //import { MongooseModule } from '@nestjs/mongoose';
