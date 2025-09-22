@@ -20,6 +20,7 @@ import { TeacherSpecialization } from './users/teacher/teacher_specializations.e
 import { TeacherReview } from './users/teacher/teacher-review.entity';
 import { TeacherReviewModule } from './users/teacher/teacher-review.module';
 import { StudentGoal } from './goals/student-goal.entity';
+import { EmailModule } from './email/email.module';
 
 
 @Module({
@@ -55,6 +56,7 @@ import { StudentGoal } from './goals/student-goal.entity';
 	TeacherProfileModule,
 	TeacherReviewModule,
 	GoalsModule,
+	EmailModule,
 ],
 })
 export class AppModule { }
