@@ -277,4 +277,34 @@ export class AuthController {
 
 		return { data: valid, total: valid.length };
 	}
+
+	@Post('users/by-email')
+	async getUserByEmail(@Body() body: { email: string }) {
+		this.devLog(`📧 [POST] /auth/users/by-email called with email: ${body.email}`);
+		
+		try {
+			const user = await this.usersService.findByEmail(body.email);
+			if (!user) {
+				this.devLog(`[AUTH CONTROLLER] User not found for email: ${body.email}`);
+				return null;
+			}
+
+			this.devLog(`[AUTH CONTROLLER] User found:`, user);
+			return {
+				id: user.id_users,
+				name: user.name,
+				email: user.email,
+				is_email_confirmed: user.is_email_confirmed
+			};
+		} catch (error) {
+			this.devLog(`[AUTH CONTROLLER] Error finding user by email:`, error);
+			return null;
+		}
+	}
+
+	private devLog(message: string, ...args: any[]): void {
+		if (process.env.NODE_ENV !== 'production') {
+			console.log(message, ...args);
+		}
+	}
 }

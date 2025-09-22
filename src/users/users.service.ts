@@ -60,10 +60,6 @@ export class UsersService {
 		return user;
 	}
 
-	async findByEmail(email: string): Promise<User | null> {
-		this.logger.log(`Looking for user with email: ${email}`);
-		return this.userRepo.findOne({ where: { email } });
-	}
 
 	async save(user: User): Promise<User> {
 		return this.userRepo.save(user);
@@ -270,6 +266,24 @@ export class UsersService {
 					endDate: endDate.toISOString()
 				}
 			};
+		}
+	}
+
+	async findByEmail(email: string): Promise<User | null> {
+		try {
+			this.devLog(`[USERS SERVICE] Searching for user with email: ${email}`);
+			const user = await this.userRepo.findOne({ where: { email } });
+			this.devLog(`[USERS SERVICE] User found:`, user ? 'Yes' : 'No');
+			return user;
+		} catch (error) {
+			this.devLog(`[USERS SERVICE] Error finding user by email:`, error);
+			return null;
+		}
+	}
+
+	private devLog(message: string, ...args: any[]): void {
+		if (process.env.NODE_ENV !== 'production') {
+			console.log(message, ...args);
 		}
 	}
 }
