@@ -196,6 +196,7 @@ export class UsersService {
 					u.id_users, 
 					u.name, 
 					u.surname,
+					u.email,
 					u.roles,
 					u.is_email_confirmed,
 					g."examLevel",
