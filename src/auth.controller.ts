@@ -6,6 +6,7 @@ import { JwtAuthService } from './auth/jwt.service';
 import { JwtAuthGuard } from './auth/jwt.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { Roles } from './auth/roles.decorator';
+import { Public } from './auth/public.decorator';
 import { LoginDto } from './auth/dto/login.dto';
 import { RegisterDto } from './auth/dto/register.dto';
 import { JwtResponseDto } from './auth/dto/jwt-response.dto';
@@ -26,7 +27,6 @@ export class AuthController {
 		private readonly jwtAuthService: JwtAuthService,
 	) { }
 
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles('admin')
 	@Get('users/stats')
 	async getUsersStats(
@@ -43,6 +43,7 @@ export class AuthController {
 		return stats;
 	}
 
+	@Public()
 	@Get('users/:id')
 	async getUser(@Param('id') id: string) {
 		console.log('⚡ GET /auth/users/:id HIT', id);
@@ -60,6 +61,7 @@ export class AuthController {
 		};
 	}
 
+	@Public()
 	@Post('register')
 	async register(@Body() registerDto: RegisterDto): Promise<JwtResponseDto> {
 		this.logger.log(`Register attempt for: ${registerDto.email}, roles: ${registerDto.roles}`);
@@ -93,6 +95,7 @@ export class AuthController {
 		return await this.jwtAuthService.generateTokens(user);
 	}
 
+	@Public()
 	@Post('login')
 	async login(@Body() loginDto: LoginDto): Promise<JwtResponseDto> {
 		this.logger.log(`Login attempt for: ${loginDto.email}`);
@@ -115,21 +118,24 @@ export class AuthController {
 		return await this.jwtAuthService.generateTokens(user);
 	}
 
+	@Public()
 	@Post('refresh-token')
 	async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
 		this.logger.log('Token refresh attempt');
+		this.logger.log('Refresh token received:', refreshTokenDto.refresh_token ? `${refreshTokenDto.refresh_token.substring(0, 20)}...` : 'null');
 		
 		try {
 			const newTokens = await this.jwtAuthService.refreshAccessToken(refreshTokenDto.refresh_token);
 			this.logger.log('Token refreshed successfully');
+			this.logger.log('New access token generated:', newTokens.access_token ? `${newTokens.access_token.substring(0, 20)}...` : 'null');
 			return newTokens;
 		} catch (error) {
 			this.logger.warn('Token refresh failed:', error.message);
+			this.logger.error('Full error details:', error);
 			throw new BadRequestException('Invalid refresh token');
 		}
 	}
 
-	@UseGuards(JwtAuthGuard, RolesGuard)
 	@Roles('student', 'teacher', 'admin')
 	@Get('profile')
 	async getProfile(@Request() req) {
@@ -150,6 +156,7 @@ export class AuthController {
 		};
 	}
 
+	@Public()
 	@Post('confirm-email')
 	async confirmEmail(@Body() confirmEmailDto: ConfirmEmailDto) {
 		this.logger.log(`Email confirmation attempt for: ${confirmEmailDto.email}`);
@@ -174,6 +181,7 @@ export class AuthController {
 		}
 	}
 
+	@Public()
 	@Post('resend-confirmation')
 	async resendConfirmation(@Body() body: { email: string }) {
 		this.logger.log(`Resend confirmation request for: ${body.email}`);
@@ -206,6 +214,7 @@ export class AuthController {
 		}
 	}
 
+	@Public()
 	@Get('check-email')
 	async checkEmail(@Query('email') email: string) {
 		const user = await this.usersService.findByEmail(email);
@@ -219,6 +228,7 @@ export class AuthController {
 		return { exists: false };
 	}
 
+	@Public()
 	@Get('teachers')
 	async getTeachers(
 		@Query('page') page = 1,
@@ -278,6 +288,7 @@ export class AuthController {
 		return { data: valid, total: valid.length };
 	}
 
+	@Public()
 	@Post('users/by-email')
 	async getUserByEmail(@Body() body: { email: string }) {
 		this.devLog(`📧 [POST] /auth/users/by-email called with email: ${body.email}`);

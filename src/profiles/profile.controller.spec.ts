@@ -43,10 +43,11 @@ describe('ProfilesController', () => {
     const userId = 'user1';
     const updates = { bio: 'Updated bio' };
     const updatedProfile = { user_id: userId, bio: 'Updated bio' };
+    const mockReq = { user: { sub: userId } }; // Mock request with user
 
     profilesService.updateProfile.mockResolvedValue(updatedProfile as any);
 
-    const result = await controller.updateProfile(userId, updates);
+    const result = await controller.updateProfile(userId, updates, mockReq);
 
     expect(profilesService.updateProfile).toHaveBeenCalledWith(userId, updates);
     expect(result).toEqual(updatedProfile);

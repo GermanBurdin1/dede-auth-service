@@ -1,10 +1,12 @@
 import { Controller, Get, Param, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
+import { Public } from '../auth/public.decorator';
 
 @Controller('email')
 export class EmailController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Public()
   @Get('user/:id')
   async getUserEmail(@Param('id') id: string) {
     console.log('📧 GET /email/user/:id HIT', id);

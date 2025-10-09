@@ -1,25 +1,34 @@
-import { Controller, Get, Put, Param, Body, Post } from '@nestjs/common';
+import { Controller, Get, Put, Param, Body, Post, Req } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
+import { Public } from '../auth/public.decorator';
 
 @Controller('profiles')
 export class ProfilesController {
 	constructor(private readonly profilesService: ProfilesService) { }
 
+	@Public()
 	@Post()
 	async createProfile(@Body() profile: any) {
 		console.log('[ProfilesController] Creating profile for user_id:', profile.user_id);
 		return this.profilesService.createProfile(profile);
 	}
 
+	@Public()
 	@Get(':user_id')
 	async getProfile(@Param('user_id') user_id: string) {
 		return this.profilesService.findProfile(user_id);
 	}
 
 	@Put(':user_id')
-	async updateProfile(@Param('user_id') user_id: string, @Body() updates: any) {
+	async updateProfile(@Param('user_id') user_id: string, @Body() updates: any, @Req() req: any) {
 		console.log('[ProfilesController] PUT /profiles/' + user_id);
 		console.log('[ProfilesController] Updates payload:', updates);
+		
+		// Проверяем, что пользователь обновляет только свой профиль
+		const currentUserId = req.user?.sub;
+		if (user_id !== currentUserId) {
+			throw new Error('Unauthorized: You can only update your own profile');
+		}
 
 		return this.profilesService.updateProfile(user_id, updates);
 	}

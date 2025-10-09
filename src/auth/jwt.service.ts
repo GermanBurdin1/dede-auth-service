@@ -51,7 +51,14 @@ export class JwtAuthService {
 
   async refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expires_in: number }> {
     try {
+      console.log('[JwtAuthService] Verifying refresh token...');
       const payload = await this.jwtService.verifyAsync(refreshToken);
+      console.log('[JwtAuthService] Refresh token verified successfully, payload:', {
+        sub: payload.sub,
+        email: payload.email,
+        roles: payload.roles,
+        exp: payload.exp
+      });
       
       // Создаем новый access token с тем же payload
       const access_token = await this.jwtService.signAsync({
@@ -64,11 +71,14 @@ export class JwtAuthService {
         expiresIn: '15m',
       });
 
+      console.log('[JwtAuthService] New access token generated successfully');
+
       return {
         access_token,
         expires_in: 900,
       };
-    } catch {
+    } catch (error) {
+      console.error('[JwtAuthService] Refresh token verification failed:', error.message);
       throw new Error('Invalid refresh token');
     }
   }

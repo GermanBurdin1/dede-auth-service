@@ -1,11 +1,13 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Req } from '@nestjs/common';
 import { GoalsService } from './goals.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
+import { Public } from '../auth/public.decorator';
 
 @Controller('goals')
 export class GoalsController {
   constructor(private goalsService: GoalsService) {}
 
+  @Public()
   @Get('exam-levels')
   getAvailableExamLevels() {
     return {
