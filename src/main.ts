@@ -15,7 +15,8 @@ async function bootstrap() {
 	}));
 	
 	app.enableCors({
-		origin: 'http://localhost:4200',
+		origin: true, // Разрешить все localhost порты для разработки
+		credentials: true,
 	});
 	const server = app.getHttpServer();
 	const router = server._events.request._router;
@@ -26,6 +27,6 @@ async function bootstrap() {
 			const path = r.route.path;
 			console.log(`${method} ${path}`);
 		});
-	await app.listen(process.env.PORT || 3000);
+	await app.listen(process.env.PORT || 3001);
 }
 bootstrap();
